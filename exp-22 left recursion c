@@ -1,0 +1,67 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_PRODUCTIONS 100
+#define MAX_STRING_LENGTH 100
+
+typedef struct {
+    char non_terminal;
+    char production[MAX_STRING_LENGTH];
+} Production;
+
+void eliminate_left_recursion(Production productions[], int count) {
+    for (int i = 0; i < count; i++) {
+        char A = productions[i].non_terminal;
+        char alpha[MAX_STRING_LENGTH] = {0};
+        char beta[MAX_STRING_LENGTH] = {0};
+        int found_direct_left_recursion = 0;
+
+        printf("Processing production for non-terminal '%c': %s\n", A, productions[i].production);
+
+       
+        int j = 0, k = 0;
+        for (int l = 0; productions[i].production[l] != '\0'; l++) {
+            if (productions[i].production[l] == A) {
+                found_direct_left_recursion = 1;
+                if (l > 0) {
+                    strncpy(beta, productions[i].production, l);
+                    beta[l] = '\0';
+                }
+                j = l + 1;
+            }
+        }
+        if (found_direct_left_recursion) {
+            
+            strncpy(alpha, productions[i].production + j, MAX_STRING_LENGTH - 1);
+            printf("Alpha: %s, Beta: %s\n", alpha, beta);
+
+            
+            char new_non_terminal = A + 1;
+            printf("Introducing new non-terminal '%c'\n", new_non_terminal);
+
+            
+            printf("%c -> %s%c\n", A, beta, new_non_terminal);
+            printf("%c -> %s%c\n", new_non_terminal, alpha, new_non_terminal);
+            printf("%c -> e\n", new_non_terminal);
+        }
+    }
+}
+
+int main() {
+    Production productions[MAX_PRODUCTIONS];
+    int count = 0;
+
+    printf("Enter number of productions: ");
+    scanf("%d", &count);
+
+    for (int i = 0; i < count; i++) {
+        printf("Enter non-terminal and production for production %d (format: A->alpha): ", i + 1);
+        scanf(" %c", &productions[i].non_terminal);
+        scanf("%s", productions[i].production);
+    }
+
+    eliminate_left_recursion(productions, count);
+
+    return 0;
+}
