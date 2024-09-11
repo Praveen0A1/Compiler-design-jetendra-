@@ -1,0 +1,124 @@
+#include <stdio.h>
+#include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_TOKEN_LENGTH 100
+#define MAX_TOKENS 100
+
+// Define token types
+typedef enum {
+    TOKEN_NUMBER,
+    TOKEN_OPERATOR,
+    TOKEN_PARENTHESIS,
+    TOKEN_INVALID,
+    TOKEN_END
+} TokenType;
+
+// Define a structure to represent a token
+typedef struct {
+    TokenType type;
+    char value[MAX_TOKEN_LENGTH];
+} Token;
+
+// Function to create a token
+Token createToken(TokenType type, const char* value) {
+    Token token;
+    token.type = type;
+    strncpy(token.value, value, MAX_TOKEN_LENGTH - 1);
+    token.value[MAX_TOKEN_LENGTH - 1] = '\0'; // Ensure null-termination
+    return token;
+}
+
+// Function to print a token
+void printToken(Token token) {
+    switch (token.type) {
+        case TOKEN_NUMBER:
+            printf("NUMBER: %s\n", token.value);
+            break;
+        case TOKEN_OPERATOR:
+            printf("OPERATOR: %s\n", token.value);
+            break;
+        case TOKEN_PARENTHESIS:
+            printf("PARENTHESIS: %s\n", token.value);
+            break;
+        case TOKEN_INVALID:
+            printf("INVALID TOKEN: %s\n", token.value);
+            break;
+        case TOKEN_END:
+            printf("END OF INPUT\n");
+            break;
+    }
+}
+
+// Function to tokenize an arithmetic expression
+void tokenize(const char* input) {
+    int i = 0;
+    int length = strlen(input);
+
+    while (i < length) {
+        if (isspace(input[i])) {
+            i++;
+            continue; // Skip whitespace
+        }
+
+        Token token;
+        char value[MAX_TOKEN_LENGTH];
+        int j = 0;
+
+        // Check for numbers
+        if (isdigit(input[i])) {
+            while (i < length && isdigit(input[i])) {
+                value[j++] = input[i++];
+            }
+            value[j] = '\0';
+            token = createToken(TOKEN_NUMBER, value);
+        }
+        // Check for operators
+        else if (strchr("+-*/", input[i])) {
+            value[j++] = input[i++];
+            value[j] = '\0';
+            token = createToken(TOKEN_OPERATOR, value);
+        }
+        // Check for parentheses
+        else if (strchr("()", input[i])) {
+            value[j++] = input[i++];
+            value[j] = '\0';
+            token = createToken(TOKEN_PARENTHESIS, value);
+        }
+        // Handle invalid characters
+        else {
+            value[j++] = input[i++];
+            value[j] = '\0';
+            token = createToken(TOKEN_INVALID, value);
+        }
+
+        printToken(token); // Print the token
+    }
+
+    // Print end of input token
+    Token endToken = createToken(TOKEN_END, "");
+    printToken(endToken);
+}
+
+int main() {
+    char input[MAX_TOKEN_LENGTH];
+
+    // Prompt the user for input
+    printf("Enter an arithmetic expression: ");
+    if (fgets(input, sizeof(input), stdin) == NULL) {
+        fprintf(stderr, "Error reading input.\n");
+        return 1;
+    }
+
+    // Remove newline character if present
+    size_t len = strlen(input);
+    if (len > 0 && input[len - 1] == '\n') {
+        input[len - 1] = '\0';
+    }
+
+    // Tokenize the input expression
+    tokenize(input);
+
+    return 0;
+}
