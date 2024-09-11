@@ -1,0 +1,125 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+
+#define MAX_PRODUCTIONS 100
+#define MAX_STRING_LENGTH 100
+
+typedef struct {
+    char non_terminal;
+    char production[MAX_STRING_LENGTH];
+} Production;
+
+typedef struct {
+    char non_terminal;
+    char follow[MAX_STRING_LENGTH];
+} FollowSet;
+
+// Function to check if a character is in a string
+bool is_in_string(char ch, const char *str) {
+    return strchr(str, ch) != NULL;
+}
+
+// Function to add a character to a string if not already present
+void add_to_string(char ch, char *str) {
+    if (!is_in_string(ch, str)) {
+        size_t len = strlen(str);
+        str[len] = ch;
+        str[len + 1] = '\0';
+    }
+}
+
+// Function to compute the Follow set for a non-terminal
+void compute_follow(Production productions[], int prod_count, FollowSet follow_sets[], int follow_count) {
+    bool updated;
+    do {
+        updated = false;
+        for (int i = 0; i < prod_count; i++) {
+            char A = productions[i].non_terminal;
+            char *prod = productions[i].production;
+            FollowSet *follow_set_A = NULL;
+
+            // Find FollowSet for the current non-terminal
+            for (int f = 0; f < follow_count; f++) {
+                if (follow_sets[f].non_terminal == A) {
+                    follow_set_A = &follow_sets[f];
+                    break;
+                }
+            }
+
+            // Process each symbol in the production
+            for (int j = 0; prod[j] != '\0'; j++) {
+                char symbol = prod[j];
+                if (symbol >= 'A' && symbol <= 'Z') {
+                    // Current symbol is a non-terminal
+                    if (follow_set_A == NULL) {
+                        printf("Error: Follow set for non-terminal '%c' not found\n", A);
+                        return;
+                    }
+                    // Find Follow set of the current non-terminal
+                    FollowSet *follow_set_B = NULL;
+                    for (int f = 0; f < follow_count; f++) {
+                        if (follow_sets[f].non_terminal == symbol) {
+                            follow_set_B = &follow_sets[f];
+                            break;
+                        }
+                    }
+                    if (follow_set_B == NULL) {
+                        printf("Error: Follow set for non-terminal '%c' not found\n", symbol);
+                        return;
+                    }
+                    // Add Follow(B) to Follow(A)
+                    for (int k = 0; follow_set_B->follow[k] != '\0'; k++) {
+                        if (!is_in_string(follow_set_B->follow[k], follow_set_A->follow)) {
+                            add_to_string(follow_set_B->follow[k], follow_set_A->follow);
+                            updated = true;
+                        }
+                    }
+
+                    // If A -> αBβ, and ε is in First(β), add Follow(A) to Follow(B)
+                    if (prod[j + 1] == '\0') {
+                        // Add Follow(A) to Follow(B) if β is empty
+                        for (int k = 0; follow_set_A->follow[k] != '\0'; k++) {
+                            if (!is_in_string(follow_set_A->follow[k], follow_set_B->follow)) {
+                                add_to_string(follow_set_A->follow[k], follow_set_B->follow);
+                                updated = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } while (updated);
+}
+
+int main() {
+    Production productions[MAX_PRODUCTIONS];
+    FollowSet follow_sets[MAX_PRODUCTIONS];
+    int prod_count = 0;
+    int follow_count = 0;
+
+    printf("Enter number of productions: ");
+    scanf("%d", &prod_count);
+
+    for (int i = 0; i < prod_count; i++) {
+        printf("Enter non-terminal and production for production %d (format: A->alpha|beta): ", i + 1);
+        scanf(" %c", &productions[i].non_terminal);
+        scanf("%s", productions[i].production);
+
+        // Initialize Follow set for non-terminal
+        follow_sets[follow_count].non_terminal = productions[i].non_terminal;
+        follow_sets[follow_count].follow[0] = '\0';
+        follow_count++;
+    }
+
+    // Compute Follow sets
+    compute_follow(productions, prod_count, follow_sets, follow_count);
+
+    // Print the Follow sets
+    for (int i = 0; i < follow_count; i++) {
+        printf("Follow(%c) = %s\n", follow_sets[i].non_terminal, follow_sets[i].follow);
+    }
+
+    return 0;
+}
