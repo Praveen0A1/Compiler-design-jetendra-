@@ -1,0 +1,21 @@
+#include <stdio.h>
+#include <ctype.h>
+
+
+int is_consonant(char ch) {
+    ch = tolower(ch); 
+    return (ch >= 'a' && ch <= 'z') && (ch != 'a' && ch != 'e' && ch != 'i' && ch != 'o' && ch != 'u');
+}
+
+int main() {
+    int ch;
+    printf("Enter text (Ctrl+D to end input):\n");
+
+    while ((ch = getchar()) != EOF) {
+        if (is_consonant(ch)) {
+            putchar(ch);
+        }
+    }
+
+    return 0;
+}
