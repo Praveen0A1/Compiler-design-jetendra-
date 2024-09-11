@@ -1,0 +1,106 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define TABLE_SIZE 101 // Size of the hash table
+
+// Define a structure to represent a symbol in the symbol table
+typedef struct Symbol {
+    char name[50];   // Name of the symbol (e.g., variable or function name)
+    char type[50];   // Type of the symbol (e.g., int, float, void)
+    int scope;       // Scope level where the symbol is defined
+    struct Symbol* next; // Pointer to handle hash collisions (chaining)
+} Symbol;
+
+// Array of pointers to Symbol, representing the hash table
+Symbol* symbolTable[TABLE_SIZE];
+
+// Hash function to compute an index for a given symbol name
+unsigned int hash(const char* str) {
+    unsigned int hash = 0;
+    while (*str) {
+        hash = (hash << 5) + *str++; // Simple hash function
+    }
+    return hash % TABLE_SIZE; // Return index within the table size
+}
+
+// Initialize the symbol table
+void initSymbolTable() {
+    for (int i = 0; i < TABLE_SIZE; i++) {
+        symbolTable[i] = NULL; // Set all entries to NULL
+    }
+}
+
+// Insert a symbol into the symbol table
+void insertSymbol(const char* name, const char* type, int scope) {
+    unsigned int index = hash(name); // Compute index for the symbol
+    Symbol* newSymbol = (Symbol*)malloc(sizeof(Symbol)); // Allocate memory for new symbol
+    strcpy(newSymbol->name, name);   // Copy symbol name
+    strcpy(newSymbol->type, type);   // Copy symbol type
+    newSymbol->scope = scope;         // Set symbol scope
+    newSymbol->next = symbolTable[index]; // Insert symbol at the beginning of the list
+    symbolTable[index] = newSymbol;   // Update hash table
+}
+
+// Lookup a symbol in the symbol table by name
+Symbol* lookupSymbol(const char* name) {
+    unsigned int index = hash(name); // Compute index for the symbol
+    Symbol* symbol = symbolTable[index]; // Start searching from the head of the list
+    while (symbol != NULL) {
+        if (strcmp(symbol->name, name) == 0) {
+            return symbol; // Return the symbol if found
+        }
+        symbol = symbol->next; // Move to the next symbol in the list
+    }
+    return NULL; // Return NULL if symbol not found
+}
+
+// Print the contents of the symbol table
+void printSymbolTable() {
+    for (int i = 0; i < TABLE_SIZE; i++) {
+        Symbol* symbol = symbolTable[i]; // Start at the head of the list
+        while (symbol != NULL) {
+            // Print details of the current symbol
+            printf("Name: %s, Type: %s, Scope: %d\n", symbol->name, symbol->type, symbol->scope);
+            symbol = symbol->next; // Move to the next symbol in the list
+        }
+    }
+}
+
+// Free the memory allocated for the symbol table
+void freeSymbolTable() {
+    for (int i = 0; i < TABLE_SIZE; i++) {
+        Symbol* symbol = symbolTable[i];
+        while (symbol != NULL) {
+            Symbol* toDelete = symbol;
+            symbol = symbol->next; // Move to the next symbol before deleting the current one
+            free(toDelete); // Free memory of the current symbol
+        }
+    }
+}
+
+int main() {
+    initSymbolTable(); // Initialize the symbol table
+
+    // Insert some symbols into the symbol table
+    insertSymbol("var1", "int", 1);
+    insertSymbol("var2", "float", 1);
+    insertSymbol("func1", "void", 0);
+    insertSymbol("var3", "char", 2);
+
+    // Lookup and print details of a symbol
+    Symbol* symbol = lookupSymbol("var2");
+    if (symbol) {
+        printf("Found symbol: Name: %s, Type: %s, Scope: %d\n", symbol->name, symbol->type, symbol->scope);
+    } else {
+        printf("Symbol not found\n");
+    }
+
+    // Print all symbols in the symbol table
+    printSymbolTable();
+
+    // Free allocated memory for the symbol table
+    freeSymbolTable();
+
+    return 0;
+}
