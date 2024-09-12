@@ -1,0 +1,122 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+
+typedef enum {
+    TOKEN_NUMBER,
+    TOKEN_PLUS,
+    TOKEN_MINUS,
+    TOKEN_STAR,
+    TOKEN_SLASH,
+    TOKEN_LPAREN,
+    TOKEN_RPAREN,
+    TOKEN_EOF,
+    TOKEN_INVALID
+} TokenType;
+
+typedef struct {
+    TokenType type;
+    int value;
+} Token;
+
+const char *input;
+Token current_token;
+
+void next_token() {
+    while (isspace(*input)) ++input;
+
+    if (*input == '\0') {
+        current_token.type = TOKEN_EOF;
+    } else if (isdigit(*input)) {
+        current_token.type = TOKEN_NUMBER;
+        current_token.value = strtol(input, (char**)&input, 10);
+    } else if (*input == '+') {
+        current_token.type = TOKEN_PLUS;
+        ++input;
+    } else if (*input == '-') {
+        current_token.type = TOKEN_MINUS;
+        ++input;
+    } else if (*input == '*') {
+        current_token.type = TOKEN_STAR;
+        ++input;
+    } else if (*input == '/') {
+        current_token.type = TOKEN_SLASH;
+        ++input;
+    } else if (*input == '(') {
+        current_token.type = TOKEN_LPAREN;
+        ++input;
+    } else if (*input == ')') {
+        current_token.type = TOKEN_RPAREN;
+        ++input;
+    } else {
+        current_token.type = TOKEN_INVALID;
+    }
+}
+
+int expr();
+
+int factor() {
+    int result;
+
+    if (current_token.type == TOKEN_NUMBER) {
+        result = current_token.value;
+        next_token();
+    } else if (current_token.type == TOKEN_LPAREN) {
+        next_token();
+        result = expr();
+        if (current_token.type != TOKEN_RPAREN) {
+            printf("Syntax error: expected ')'\n");
+            exit(1);
+        }
+        next_token();
+    } else {
+        printf("Syntax error: expected number or '('\n");
+        exit(1);
+    }
+
+    return result;
+}
+
+int term() {
+    int result = factor();
+
+    while (current_token.type == TOKEN_STAR || current_token.type == TOKEN_SLASH) {
+        TokenType op = current_token.type;
+        next_token();
+        if (op == TOKEN_STAR) {
+            result *= factor();
+        } else {
+            result /= factor();
+        }
+    }
+
+    return result;
+}
+
+int expr() {
+    int result = term();
+
+    while (current_token.type == TOKEN_PLUS || current_token.type == TOKEN_MINUS) {
+        TokenType op = current_token.type;
+        next_token();
+        if (op == TOKEN_PLUS) {
+            result += term();
+        } else {
+            result -= term();
+        }
+    }
+
+    return result;
+}
+
+int parse(const char *src) {
+    input = src;
+    next_token();
+    return expr();
+}
+
+int main() {
+    const char *expression = "3 + 5 * (2 - 8)";
+    printf("Result: %d\n", parse(expression));
+    return 0;
+}
