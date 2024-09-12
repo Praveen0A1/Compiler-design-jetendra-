@@ -1,0 +1,62 @@
+#include <stdio.h>
+#include <ctype.h>
+
+#define BUFFER_SIZE 1024
+
+
+void count_lines_words_characters(FILE *file);
+
+int main(int argc, char *argv[]) {
+    FILE *file;
+
+    
+    if (argc > 1) {
+        file = fopen(argv[1], "r");
+        if (file == NULL) {
+            perror("Error opening file");
+            return 1;
+        }
+    } else {
+        file = stdin; 
+    }
+
+    count_lines_words_characters(file);
+
+    if (file != stdin) {
+        fclose(file); 
+    }
+
+    return 0;
+}
+
+void count_lines_words_characters(FILE *file) {
+    int c;
+    int lines = 0, words = 0, characters = 0;
+    int in_word = 0;
+
+    while ((c = fgetc(file)) != EOF) {
+        characters++;
+
+        if (c == '\n') {
+            lines++;
+        }
+
+        if (isspace(c) || c == '\n' || c == '\t') {
+            if (in_word) {
+                words++;
+                in_word = 0;
+            }
+        } else {
+            in_word = 1;
+        }
+    }
+
+    if (in_word) { 
+        words++;
+    }
+
+    
+    printf("Lines: %d\n", lines + 1); 
+    printf("Words: %d\n", words);
+    printf("Characters: %d\n", characters);
+}
